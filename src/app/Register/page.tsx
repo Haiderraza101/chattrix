@@ -4,6 +4,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { db } from "../../../lib/firebase";
+import { LoaderTwo } from '../../components/ui/loader';
+import Stack from '@mui/material/Stack';
+import CircularProgress from '@mui/material/CircularProgress';
+import PopUpMessage from "@/components/popup";
+
 import {
   collection,
   addDoc,
@@ -29,16 +34,19 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [error, setError] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<boolean>(false);
+  const [popupMessage, setPopupMessage] = useState<string>("");
+const [showPopup, setShowPopup] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const uploadImage = async (file?: File) => {
     const selectedImage = file || (typeof image !== "string" ? image : null);
-
-    if (!selectedImage) {
-      return alert("Please select an image file");
-    }
+if (!selectedImage) {
+  setPopupMessage("Please select an image file first.");
+  setShowPopup(true);
+  return;
+}
 
     setLoading(true);
 
@@ -53,14 +61,18 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(`Upload failed: ${text}`);
+       setPopupMessage(`Upload failed ${text}`);
+  setShowPopup(true);
+  return;
       }
 
       const data = await res.json();
       const imageurl = data.url;
 
       if (!imageurl) {
-        throw new Error("Upload failed: No URL returned");
+        setPopupMessage("Upload failed no Url returned");
+  setShowPopup(true);
+  return;
       }
 
       const imageDoc: ImageData = {
@@ -76,9 +88,11 @@ export default function RegisterPage() {
       });
 
       setUploadedImage(imageDoc);
-      setImage("/profilepicture.jpg"); // Optional: reset preview
+      setImage("/profilepicture.jpg");
     } catch (err) {
-      alert((err as Error).message);
+      setPopupMessage((err as Error).message);
+  setShowPopup(true);
+      
     } finally {
       setLoading(false);
     }
@@ -104,7 +118,7 @@ export default function RegisterPage() {
   }, []);
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-blue-100 via-white to-purple-200">
+    <div className="flex items-center justify-center min-h-screen px-4 bg-gradient-to-br from-blue-50 via-white to-purple-100">
       <div className="bg-white shadow-md rounded-lg p-6 w-full max-w-sm border border-gray-200">
         <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
           <div className="flex justify-center mb-1">
@@ -150,11 +164,12 @@ export default function RegisterPage() {
 
             <button
               type="button"
-              onClick={() => uploadImage()}
+              onClick={() => fileInputRef.current?.click()}
               disabled={loading}
-              className="text-xs px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+              className="text-xs px-3 py-1.5
+              font-semibold bg-blue-400 text-white rounded hover:bg-blue-500 transition"
             >
-              {loading ? "..." : "Upload Image"}
+              {loading ?  <CircularProgress size={20} /> : "Upload Image"}
             </button>
           </div>
 
@@ -207,13 +222,24 @@ export default function RegisterPage() {
           <div>
             <button
               type="submit"
-              className="w-full text-sm bg-blue-400 hover:bg-blue-500 text-white py-2 rounded-md font-medium transition duration-150"
+              className="w-full text-sm bg-blue-400 hover:bg-blue-500 text-white py-2 rounded-md  transition duration-150 font-semibold text-center"
             >
-              {loading ? "Loading" : "Create Account"}
+             {loading ? (
+  <div className="flex justify-center items-center">
+    <CircularProgress size={24} />
+  </div>
+) : (
+  "Create Account"
+)}
             </button>
           </div>
         </form>
       </div>
+      <PopUpMessage
+  message={popupMessage}
+  isOpen={showPopup}
+  onClose={() => setShowPopup(false)}
+/>
     </div>
   );
 }

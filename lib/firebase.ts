@@ -1,6 +1,9 @@
+// firebase.ts
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
+// ✅ Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyC3HqkXj9raniePLm2UVKswHA-zgli7bFI",
   authDomain: "chattrix-75022.firebaseapp.com",
@@ -11,5 +14,9 @@ const firebaseConfig = {
   measurementId: "G-EQGBZE3G38"
 };
 
+// ✅ Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// ✅ Export Firestore and Auth
 export const db = getFirestore(app);
+export const auth = getAuth(app);
